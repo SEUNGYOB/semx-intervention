@@ -1,0 +1,35 @@
+# SEMX Intervention Combinator
+
+삼성 MX 코호트 연구를 위한 **중재 시나리오 설계 도구**입니다.
+
+## 기능
+
+Galaxy Watch / CGM 등 웨어러블 데이터 기반의 lifestyle intervention을 4가지 모듈 조합으로 설계합니다.
+
+| 모듈 | 설명 |
+|---|---|
+| **개입 지표 (Trigger)** | 어떤 조건이 감지되면 개입할지 |
+| **행동 유도 (Action)** | 어떤 행동을 권할지 |
+| **평가 (Evaluation)** | 개입 효과를 무엇으로 측정할지 |
+| **보상 (Reward)** | 어떤 피드백/보상을 줄지 |
+
+## 사용법
+
+1. [**여기**](https://seungyeop-lee.github.io/semx-intervention-combinator/)에서 바로 사용 (GitHub Pages)
+2. 도메인(활동/수면/스트레스/혈당/노화/복합)과 타이밍 선택
+3. 4개 모듈에서 기존 옵션 선택 또는 직접 입력
+4. 시나리오 저장 → CSV/텍스트로 내보내기
+
+## 도메인
+
+- **활동** — 걸음수, 좌식시간, MVPA
+- **수면** — 수면 시간, 규칙성, 수면 단계
+- **스트레스** — HR, HRV, 스트레스 점수
+- **혈당** — CGM, TIR, 식후 glucose
+- **노화** — PpgAge, SpO2
+- **복합** — 다영역 통합, 오믹스 연계
+
+## 참고
+
+- 13개 논문 리뷰 기반 BCT (Behavior Change Techniques) 매핑
+- 데이터는 브라우저 localStorage에 저장 (서버 전송 없음)
