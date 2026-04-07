@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEMX Intervention Combinator</title>
+<link href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface2: #F4F3F0;
+  --border: #E5E4E0;
+  --border2: #D4D3CF;
+  --text1: #1A1A18;
+  --text2: #6B6A66;
+  --text3: #9B9A96;
+  --accent: #2563EB;
+  --accent-bg: #EFF6FF;
+  --accent2: #1D4ED8;
+  --act: #3B82F6; --act-bg: #EFF6FF; --act-t: #1E40AF;
+  --sleep: #8B5CF6; --sleep-bg: #F5F3FF; --sleep-t: #5B21B6;
+  --stress: #EC4899; --stress-bg: #FDF2F8; --stress-t: #9D174D;
+  --glucose: #F59E0B; --glucose-bg: #FFFBEB; --glucose-t: #92400E;
+  --aging: #10B981; --aging-bg: #ECFDF5; --aging-t: #065F46;
+  --multi: #6B7280; --multi-bg: #F3F4F6; --multi-t: #374151;
+  --danger: #EF4444; --danger-bg: #FEF2F2;
+  --success: #10B981; --success-bg: #ECFDF5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); color: var(--text1); font-size: 15px; line-height: 1.6; }
+.app { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+header { margin-bottom: 2rem; }
+header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+header p { color: var(--text2); font-size: 0.85rem; }
+.builder { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem; margin-bottom: 1.5rem; }
+.builder-title { font-size: 0.8rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+.builder-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1rem; }
+@media (max-width: 768px) { .grid4 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .grid4 { grid-template-columns: 1fr; } }
+.col-box { position: relative; }
+.col-label { font-size: 0.7rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.col-label .icon { font-size: 0.75rem; }
+.sel-wrap { position: relative; }
+.sel-wrap select { width: 100%; padding: 10px 32px 10px 12px; font-size: 0.85rem; font-family: inherit; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text1); appearance: none; cursor: pointer; transition: border-color 0.15s; }
+.sel-wrap select:hover { border-color: var(--border2); }
+.sel-wrap select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.sel-wrap::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.7rem; pointer-events: none; }
+.or-divider { text-align: center; color: var(--text3); font-size: 0.7rem; margin: 8px 0; }
+.custom-input { width: 100%; padding: 9px 12px; font-size: 0.82rem; font-family: inherit; border: 1px dashed var(--border); border-radius: 10px; background: var(--surface2); color: var(--text1); transition: border-color 0.15s; }
+.custom-input:focus { outline: none; border-color: var(--accent); border-style: solid; background: var(--surface); }
+.custom-input::placeholder { color: var(--text3); }
+.domain-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+.domain-row label { font-size: 0.7rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
+.dom-chip { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.15s; }
+.dom-chip:hover { background: var(--surface2); }
+.dom-chip.active { border-color: transparent; }
+.dom-chip[data-d="활동"].active { background: var(--act-bg); color: var(--act-t); border-color: var(--act); }
+.dom-chip[data-d="수면"].active { background: var(--sleep-bg); color: var(--sleep-t); border-color: var(--sleep); }
+.dom-chip[data-d="스트레스"].active { background: var(--stress-bg); color: var(--stress-t); border-color: var(--stress); }
+.dom-chip[data-d="혈당"].active { background: var(--glucose-bg); color: var(--glucose-t); border-color: var(--glucose); }
+.dom-chip[data-d="노화"].active { background: var(--aging-bg); color: var(--aging-t); border-color: var(--aging); }
+.dom-chip[data-d="복합"].active { background: var(--multi-bg); color: var(--multi-t); border-color: var(--multi); }
+.timing-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+.timing-row label { font-size: 0.7rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
+.tm-chip { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.15s; }
+.tm-chip:hover { background: var(--surface2); }
+.tm-chip.active { background: var(--text1); color: var(--surface); border-color: var(--text1); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 24px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: all 0.15s; }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-primary:disabled { background: var(--border); color: var(--text3); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface2); }
+.saved-section { margin-top: 2rem; }
+.saved-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.saved-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
+.saved-count { font-size: 0.8rem; color: var(--text3); background: var(--surface2); padding: 3px 10px; border-radius: 20px; }
+.scenario-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; margin-bottom: 10px; transition: box-shadow 0.15s; position: relative; }
+.scenario-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.sc-top { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.sc-badge { padding: 3px 10px; border-radius: 16px; font-size: 0.7rem; font-weight: 600; }
+.sc-badge.활동 { background: var(--act-bg); color: var(--act-t); }
+.sc-badge.수면 { background: var(--sleep-bg); color: var(--sleep-t); }
+.sc-badge.스트레스 { background: var(--stress-bg); color: var(--stress-t); }
+.sc-badge.혈당 { background: var(--glucose-bg); color: var(--glucose-t); }
+.sc-badge.노화 { background: var(--aging-bg); color: var(--aging-t); }
+.sc-badge.복합 { background: var(--multi-bg); color: var(--multi-t); }
+.sc-badge.tm { background: var(--surface2); color: var(--text2); }
+.sc-num { font-size: 0.7rem; color: var(--text3); margin-left: auto; }
+.sc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 768px) { .sc-grid { grid-template-columns: 1fr 1fr; } }
+.sc-cell { padding: 10px 12px; border-radius: 10px; background: var(--surface2); }
+.sc-cell-label { font-size: 0.65rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.sc-cell-val { font-size: 0.82rem; color: var(--text1); line-height: 1.45; }
+.sc-delete { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: var(--text3); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.sc-delete:hover { background: var(--danger-bg); color: var(--danger); }
+.sc-note { margin-top: 8px; }
+.sc-note textarea { width: 100%; padding: 8px 10px; font-size: 0.8rem; font-family: inherit; border: 1px dashed var(--border); border-radius: 8px; background: var(--surface2); color: var(--text1); resize: vertical; min-height: 32px; }
+.sc-note textarea:focus { outline: none; border-color: var(--accent); border-style: solid; }
+.export-bar { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 24px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; color: #fff; background: var(--text1); box-shadow: 0 4px 20px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; }
+.toast.show { opacity: 1; }
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+.empty-state .empty-icon { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.4; }
+.empty-state p { font-size: 0.85rem; }
+.preview { background: var(--accent-bg); border: 1px solid rgba(37,99,235,0.15); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.preview-title { font-size: 0.7rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.preview-text { font-size: 0.9rem; color: var(--text1); line-height: 1.6; }
+.preview-text strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>SEMX Intervention Combinator</h1>
+  <p>개입 지표 · 행동 유도 · 평가 · 보상을 조합하여 새로운 중재 시나리오를 설계합니다</p>
+</header>
+
+<div class="builder">
+  <div class="builder-title">시나리오 빌더</div>
+
+  <div class="domain-row">
+    <label>도메인</label>
+    <div class="dom-chip" data-d="활동" onclick="toggleDom(this)">활동</div>
+    <div class="dom-chip" data-d="수면" onclick="toggleDom(this)">수면</div>
+    <div class="dom-chip" data-d="스트레스" onclick="toggleDom(this)">스트레스</div>
+    <div class="dom-chip" data-d="혈당" onclick="toggleDom(this)">혈당</div>
+    <div class="dom-chip" data-d="노화" onclick="toggleDom(this)">노화</div>
+    <div class="dom-chip" data-d="복합" onclick="toggleDom(this)">복합</div>
+  </div>
+
+  <div class="timing-row">
+    <label>타이밍</label>
+    <div class="tm-chip" data-t="실시간" onclick="toggleTm(this)">실시간</div>
+    <div class="tm-chip" data-t="아침" onclick="toggleTm(this)">아침</div>
+    <div class="tm-chip" data-t="주간" onclick="toggleTm(this)">주간</div>
+    <div class="tm-chip" data-t="건진 시" onclick="toggleTm(this)">건진 시</div>
+  </div>
+
+  <div class="grid4">
+    <div class="col-box">
+      <div class="col-label"><span class="icon">⚡</span> 개입 지표 (trigger)</div>
+      <div class="sel-wrap"><select id="sel-trigger" onchange="updatePreview()"><option value="">선택하세요</option></select></div>
+      <div class="or-divider">또는 직접 입력</div>
+      <input class="custom-input" id="cust-trigger" placeholder="새 trigger 입력..." oninput="updatePreview()">
+    </div>
+    <div class="col-box">
+      <div class="col-label"><span class="icon">🎯</span> 행동 유도 (action)</div>
+      <div class="sel-wrap"><select id="sel-action" onchange="updatePreview()"><option value="">선택하세요</option></select></div>
+      <div class="or-divider">또는 직접 입력</div>
+      <input class="custom-input" id="cust-action" placeholder="새 action 입력..." oninput="updatePreview()">
+    </div>
+    <div class="col-box">
+      <div class="col-label"><span class="icon">📊</span> 평가 (evaluation)</div>
+      <div class="sel-wrap"><select id="sel-eval" onchange="updatePreview()"><option value="">선택하세요</option></select></div>
+      <div class="or-divider">또는 직접 입력</div>
+      <input class="custom-input" id="cust-eval" placeholder="새 evaluation 입력..." oninput="updatePreview()">
+    </div>
+    <div class="col-box">
+      <div class="col-label"><span class="icon">🏆</span> 보상 (reward)</div>
+      <div class="sel-wrap"><select id="sel-reward" onchange="updatePreview()"><option value="">선택하세요</option></select></div>
+      <div class="or-divider">또는 직접 입력</div>
+      <input class="custom-input" id="cust-reward" placeholder="새 reward 입력..." oninput="updatePreview()">
+    </div>
+  </div>
+
+  <div id="preview-box" style="display:none;">
+    <div class="preview">
+      <div class="preview-title">미리보기</div>
+      <div class="preview-text" id="preview-text"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="saveBtn" onclick="saveScenario()" disabled>시나리오 저장</button>
+    <button class="btn btn-ghost" onclick="clearBuilder()">초기화</button>
+  </div>
+</div>
+
+<div class="saved-section">
+  <div class="saved-header">
+    <h2>저장된 시나리오</h2>
+    <span class="saved-count" id="savedCount">0개</span>
+  </div>
+  <div id="savedList">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>위에서 조합하여 시나리오를 만들어보세요</p>
+    </div>
+  </div>
+  <div class="export-bar" id="exportBar" style="display:none;">
+    <button class="btn btn-ghost" onclick="exportCSV()">📋 CSV 복사 (Notion 붙여넣기용)</button>
+    <button class="btn btn-ghost" onclick="exportText()">📝 텍스트 복사</button>
+    <button class="btn btn-ghost" onclick="clearAll()">🗑 전체 삭제</button>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TRIGGERS = [
+  "2시간 연속 좌식 감지",
+  "점심 식후 30분",
+  "일일 걸음수 < baseline 70%",
+  "주말 활동량 주중 대비 50%↓",
+  "안정시 HR baseline 대비 +5bpm (7일 평균)",
+  "낮은 활동량 × 높은 HR (mismatch)",
+  "수면 중 HR 급상승 에피소드",
+  "요일별 스트레스 반복 패턴 감지",
+  "Sleep Regularity Index (SRI) 저하",
+  "수면 시간 < 6h (3일 연속)",
+  "수면 부족 + 다음날 glucose 변동↑",
+  "CGM 식후 glucose > 개인 threshold",
+  "야간 저혈당 감지 (CGM < 70mg/dL)",
+  "CGM TIR < 70% (주간)",
+  "운동 전 glucose 확인 (CGM 착용 시)",
+  "PpgAge 월간 변화",
+  "수면 중 SpO2 3%↓ 에피소드 반복",
+  "높은 HR + 낮은 HRV + 낮은 수면 (3일 연속)",
+  "건진 결과: HbA1c 변화",
+  "주간 multi-domain 종합 점수",
+  "Omics profile + lifestyle 저점수"
+];
+const ACTIONS = [
+  "5분 걷기 (\"지금 300보만 걸어보세요\")",
+  "15분 걷기 (\"식후 걷기가 혈당 spike를 줄여요\")",
+  "계단 오르기 3층",
+  "adaptive 목표 제시 (현재 +10%)",
+  "1분 guided breathing",
+  "스트레스/탈수/컨디션 체크 유도",
+  "수면무호흡 screening flag",
+  "요일별 stress heatmap 제공",
+  "취침시간 nudge (30분 전)",
+  "수면 부채 경고 + 회복 계획",
+  "활동 강도 조정 권고 (고강도→가벼운 걷기)",
+  "채소 먼저 식사 순서 조정 권유",
+  "저녁 식사 조정 (취침 전 간식 권유)",
+  "식사 패턴 리뷰 + 활동량 증가 권고",
+  "운동 타이밍 조정 조언",
+  "생활습관 종합 리뷰",
+  "번아웃 경고 + 의료진 telemonitoring flag",
+  "주말 활동 계획 prompt",
+  "집중 coaching 대상 선정",
+  "연간 delta report + 다음 6개월 목표 재설정"
+];
+const EVALS = [
+  "걸음수 체크 (5분 내 달성 여부)",
+  "CGM spike 감소량 측정",
+  "코호트 내 percentile 산출",
+  "당일 걸음수 달성 여부",
+  "breathing 전후 HR/HRV 변화",
+  "이후 1시간 HR 정상화 여부",
+  "SpO2 + HR 야간 패턴 종합",
+  "다음 주 동일 시간대 HRV 비교",
+  "SRI 점수 주간 추적",
+  "수면 시간 회복 추적",
+  "수면효율 변화 추적",
+  "수면·glucose 교차 분석",
+  "식후 1h glucose 변화",
+  "다음 날 야간 glucose 패턴",
+  "주간 TIR 변화 추적",
+  "운동 중·후 glucose 반응",
+  "PpgAge gap 증감 (월간/분기별)",
+  "30일 ODI (desaturation index) 추적",
+  "3개 지표 동시 회복 추적",
+  "행동 변화량 ↔ 임상 변화 연결",
+  "5개 변수 radar chart 주간 변화",
+  "ITE (Individual Treatment Effect) 추정",
+  "심박수 recovery time 측정"
+];
+const REWARDS = [
+  "칭찬 스티커 + haptic",
+  "목표 달성 시 trophy + streak 카운터",
+  "순위권 랭킹 알림 (\"상위 28%\")",
+  "CGM spike 감소량 수치 안내",
+  "self-efficacy 수치화 (\"HR 6bpm 감소\")",
+  "경고 해소 메시지",
+  "위험 안내 + 건진 연계",
+  "패턴 개선 알림",
+  "SRI 점수 그래프 + 개선 알림",
+  "수면 부채 상환 완료 알림",
+  "수면효율 % 개선 알림",
+  "cross-insight 제공 (수면↔혈당)",
+  "개인별 food response 카탈로그 업데이트",
+  "수면 질 연계 안내",
+  "TIR 개선 + spike 원인 식별 알림",
+  "운동-glucose 패턴 학습 피드백",
+  "\"생체나이 0.5세 감소!\" + 기여 요인",
+  "의료진 브리핑 해제 알림",
+  "기여 요인 분석 + 목표 재설정",
+  "종합 웰빙 점수 + 약한 영역 안내",
+  "\"유전적으로 운동 효과가 큰 그룹\" 안내",
+  "주말 활동 달성 보너스",
+  "다음날 컨디션 예측 알림"
+];
+
+let scenarios = [];
+let selectedDomain = '';
+let selectedTiming = '';
+
+function init() {
+  populateSelect('sel-trigger', TRIGGERS);
+  populateSelect('sel-action', ACTIONS);
+  populateSelect('sel-eval', EVALS);
+  populateSelect('sel-reward', REWARDS);
+  loadFromStorage();
+  renderSaved();
+}
+
+function populateSelect(id, items) {
+  const sel = document.getElementById(id);
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item;
+    opt.textContent = item;
+    sel.appendChild(opt);
+  });
+}
+
+function toggleDom(el) {
+  document.querySelectorAll('.dom-chip').forEach(c => c.classList.remove('active'));
+  if (selectedDomain === el.dataset.d) { selectedDomain = ''; }
+  else { el.classList.add('active'); selectedDomain = el.dataset.d; }
+  updatePreview();
+}
+
+function toggleTm(el) {
+  document.querySelectorAll('.tm-chip').forEach(c => c.classList.remove('active'));
+  if (selectedTiming === el.dataset.t) { selectedTiming = ''; }
+  else { el.classList.add('active'); selectedTiming = el.dataset.t; }
+  updatePreview();
+}
+
+function getVal(selId, custId) {
+  const cust = document.getElementById(custId).value.trim();
+  if (cust) return cust;
+  return document.getElementById(selId).value;
+}
+
+function updatePreview() {
+  const t = getVal('sel-trigger', 'cust-trigger');
+  const a = getVal('sel-action', 'cust-action');
+  const e = getVal('sel-eval', 'cust-eval');
+  const r = getVal('sel-reward', 'cust-reward');
+  const box = document.getElementById('preview-box');
+  const txt = document.getElementById('preview-text');
+  const btn = document.getElementById('saveBtn');
+  const hasAny = t || a || e || r;
+  if (hasAny) {
+    box.style.display = 'block';
+    let html = '';
+    if (t) html += `<strong>[감지]</strong> ${t}`;
+    if (a) html += `${t ? ' → ' : ''}<strong>[유도]</strong> ${a}`;
+    if (e) html += `${(t||a) ? ' → ' : ''}<strong>[평가]</strong> ${e}`;
+    if (r) html += `${(t||a||e) ? ' → ' : ''}<strong>[보상]</strong> ${r}`;
+    txt.innerHTML = html;
+  } else {
+    box.style.display = 'none';
+  }
+  btn.disabled = !(t && a);
+}
+
+function saveScenario() {
+  const s = {
+    id: Date.now(),
+    domain: selectedDomain || '미지정',
+    timing: selectedTiming || '미지정',
+    trigger: getVal('sel-trigger', 'cust-trigger'),
+    action: getVal('sel-action', 'cust-action'),
+    eval: getVal('sel-eval', 'cust-eval'),
+    reward: getVal('sel-reward', 'cust-reward'),
+    note: ''
+  };
+  if (!s.trigger || !s.action) return;
+  scenarios.unshift(s);
+  saveToStorage();
+  renderSaved();
+  clearBuilder();
+  showToast('시나리오가 저장되었습니다');
+}
+
+function deleteScenario(id) {
+  scenarios = scenarios.filter(s => s.id !== id);
+  saveToStorage();
+  renderSaved();
+}
+
+function updateNote(id, val) {
+  const s = scenarios.find(x => x.id === id);
+  if (s) { s.note = val; saveToStorage(); }
+}
+
+function renderSaved() {
+  const list = document.getElementById('savedList');
+  const cnt = document.getElementById('savedCount');
+  const bar = document.getElementById('exportBar');
+  cnt.textContent = scenarios.length + '개';
+  bar.style.display = scenarios.length > 0 ? 'flex' : 'none';
+  if (scenarios.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>위에서 조합하여 시나리오를 만들어보세요</p></div>';
+    return;
+  }
+  list.innerHTML = scenarios.map((s, i) => `
+    <div class="scenario-card">
+      <button class="sc-delete" onclick="deleteScenario(${s.id})" title="삭제">×</button>
+      <div class="sc-top">
+        <span class="sc-badge ${s.domain}">${s.domain}</span>
+        <span class="sc-badge tm">${s.timing}</span>
+        <span class="sc-num">#${scenarios.length - i}</span>
+      </div>
+      <div class="sc-grid">
+        <div class="sc-cell"><div class="sc-cell-label">⚡ trigger</div><div class="sc-cell-val">${s.trigger}</div></div>
+        <div class="sc-cell"><div class="sc-cell-label">🎯 action</div><div class="sc-cell-val">${s.action}</div></div>
+        <div class="sc-cell"><div class="sc-cell-label">📊 evaluation</div><div class="sc-cell-val">${s.eval || '—'}</div></div>
+        <div class="sc-cell"><div class="sc-cell-label">🏆 reward</div><div class="sc-cell-val">${s.reward || '—'}</div></div>
+      </div>
+      <div class="sc-note"><textarea placeholder="메모 추가..." oninput="updateNote(${s.id}, this.value)">${s.note}</textarea></div>
+    </div>
+  `).join('');
+}
+
+function clearBuilder() {
+  ['sel-trigger','sel-action','sel-eval','sel-reward'].forEach(id => document.getElementById(id).value = '');
+  ['cust-trigger','cust-action','cust-eval','cust-reward'].forEach(id => document.getElementById(id).value = '');
+  selectedDomain = ''; selectedTiming = '';
+  document.querySelectorAll('.dom-chip, .tm-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('preview-box').style.display = 'none';
+  document.getElementById('saveBtn').disabled = true;
+}
+
+function clearAll() {
+  if (!confirm('저장된 시나리오를 모두 삭제하시겠습니까?')) return;
+  scenarios = [];
+  saveToStorage();
+  renderSaved();
+  showToast('전체 삭제 완료');
+}
+
+function exportCSV() {
+  const header = '도메인\t타이밍\t개입 지표\t행동 유도\t평가\t보상\t메모';
+  const rows = scenarios.map(s => [s.domain, s.timing, s.trigger, s.action, s.eval||'', s.reward||'', s.note||''].join('\t'));
+  const csv = [header, ...rows].join('\n');
+  navigator.clipboard.writeText(csv).then(() => showToast('CSV 복사 완료 — Notion/Excel에 붙여넣기 하세요'));
+}
+
+function exportText() {
+  const lines = scenarios.map((s, i) => {
+    return `[${i+1}] ${s.domain} | ${s.timing}\n  Trigger: ${s.trigger}\n  Action: ${s.action}\n  Eval: ${s.eval||'—'}\n  Reward: ${s.reward||'—'}${s.note ? '\n  Note: '+s.note : ''}`;
+  });
+  navigator.clipboard.writeText(lines.join('\n\n')).then(() => showToast('텍스트 복사 완료'));
+}
+
+function saveToStorage() { try { localStorage.setItem('semx_scenarios', JSON.stringify(scenarios)); } catch(e){} }
+function loadFromStorage() { try { const d = localStorage.getItem('semx_scenarios'); if(d) scenarios = JSON.parse(d); } catch(e){} }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+init();
+</script>
+</body>
+</html>

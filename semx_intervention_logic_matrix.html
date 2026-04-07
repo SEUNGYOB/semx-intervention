@@ -1,0 +1,109 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:0.5rem 0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--color-text-secondary)}
+.leg-item{display:flex;align-items:center;gap:4px}
+.dot{width:10px;height:10px;border-radius:50%}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.filters select,.filters input{padding:5px 10px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+.filters input{flex:1;min-width:140px}
+.cnt{font-size:11px;color:var(--color-text-secondary);margin-left:auto}
+.tbl-wrap{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:820px}
+th{background:var(--color-background-secondary);padding:8px 10px;text-align:left;font-weight:500;font-size:11px;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);white-space:nowrap}
+td{padding:7px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:500;white-space:nowrap}
+.b-act{background:#E6F1FB;color:#0C447C}
+.b-sleep{background:#EEEDFE;color:#3C3489}
+.b-stress{background:#FBEAF0;color:#72243E}
+.b-glucose{background:#FAEEDA;color:#633806}
+.b-aging{background:#E1F5EE;color:#085041}
+.b-multi{background:#F1EFE8;color:#444441}
+.b-rt{background:#EAF3DE;color:#27500A}
+.b-am{background:#FAEEDA;color:#854F0B}
+.b-wk{background:#E6F1FB;color:#185FA5}
+.b-vi{background:#EEEDFE;color:#534AB7}
+.src{font-size:10px;color:var(--color-text-tertiary);display:block;margin-top:2px}
+</style>
+<div class="wrap">
+<div class="legend">
+<div class="leg-item"><div class="dot" style="background:#85B7EB"></div>활동</div>
+<div class="leg-item"><div class="dot" style="background:#AFA9EC"></div>수면</div>
+<div class="leg-item"><div class="dot" style="background:#ED93B1"></div>스트레스/HR</div>
+<div class="leg-item"><div class="dot" style="background:#FAC775"></div>혈당/CGM</div>
+<div class="leg-item"><div class="dot" style="background:#9FE1CB"></div>노화/PPG</div>
+<div class="leg-item"><div class="dot" style="background:#D3D1C7"></div>복합</div>
+</div>
+<div class="filters">
+<select id="domF" onchange="render()"><option value="">전체 도메인</option><option value="활동">활동</option><option value="수면">수면</option><option value="스트레스">스트레스/HR</option><option value="혈당">혈당/CGM</option><option value="노화">노화/PPG</option><option value="복합">복합</option></select>
+<select id="tmF" onchange="render()"><option value="">전체 타이밍</option><option value="실시간">실시간</option><option value="아침">아침</option><option value="주간">주간</option><option value="건진">건진 시</option></select>
+<input id="srch" type="text" placeholder="검색..." oninput="render()">
+<span class="cnt" id="cnt"></span>
+</div>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:12%">도메인</th><th style="width:16%">개입 지표 (trigger)</th><th style="width:15%">행동 유도 (action)</th><th style="width:15%">평가 (evaluation)</th><th style="width:13%">보상 (reward)</th><th style="width:7%">타이밍</th><th style="width:18%">논문 근거</th></tr></thead>
+<tbody id="tb"></tbody>
+</table>
+</div>
+</div>
+<script>
+const D=[
+["활동","2시간 연속 좌식 감지","5분 걷기 권유\n\"지금 300보만 걸어보세요\"","걸음수 체크\n(5분 내 달성 여부)","칭찬 스티커 + haptic\n\"목표까지 1,200보 남았어요\"","실시간","Ferguson 2022: 활동 추적기→PA 유의 개선\nHo 2024: 단계적 목표 효과"],
+["활동","점심 식후 30분","15분 걷기 권유\n\"식후 걷기가 혈당 spike를 줄여요\"","CGM spike 감소량 +\n움직임 센서 확인","다음날 CGM spike 비교 안내\n\"어제 걸은 날 spike 23% 감소\"","실시간","Kooiman 2018: 걸음수+혈당 연동\nBCT Umbrella: feedback on outcomes"],
+["활동","주간 걸음수 집계","코호트 내 연령·성별 그룹 비교","그룹 내 상위 %\npercentile 산출","순위권 랭킹 알림\n\"이번 주 상위 28%\"","주간","Longhini 2024: 걸음수 +749~1850보/일\nFerguson 2022: social comparison"],
+["활동","일일 걸음수 < baseline 70%","adaptive 목표 제시\n\"오늘 5,400보만 채워보세요\"","당일 걸음수 달성 여부","달성 시 trophy + streak 카운터\n\"3일 연속 달성!\"","실시간","Ho 2024: 2단계 목표 (5000→7500)\nIkegaya 2025: PIC > UIC"],
+["활동","주말 활동량 주중 대비 50%↓","금요일 저녁 주말 활동 계획 prompt","주말 실제 활동량 비교","주말 활동 달성 시 보너스 스티커","주간","IDEA Trial: 지속적 행동 코칭 필요"],
+["스트레스","안정시 HR baseline 대비 +5bpm (7일 평균)","1분 guided breathing\n\"심호흡 운동을 시작하세요\"","breathing 전후 HR 변화\nHRV 개선 여부","\"호흡 운동 후 HR 6bpm 감소\"\nself-efficacy 수치화","실시간","Sense2Stop: HRV 기반 JITAI 타당성\nBCT Umbrella: coping strategies"],
+["스트레스","낮은 활동량 × 높은 HR\n(mismatch 감지)","스트레스/탈수/컨디션 체크 유도\n\"수분 섭취 확인해보세요\"","이후 1시간 HR 정상화 여부","경고 해소 시\n\"컨디션 회복되었어요\"","실시간","Battalio 2021: stress detection\nFrias 2017: 복합 모니터링"],
+["스트레스","수면 중 HR 급상승 에피소드","수면 무호흡 screening flag\n\"수면 전문의 상담을 권합니다\"","SpO2 + HR 야간 패턴 종합","위험 안내 + 건진 연계\n다음 방문 시 PSG 추천","아침","Miller 2025: PpgAge 심혈관 연관\nAHMS: 대규모 야간 데이터"],
+["스트레스","화/수/목 오후 스트레스 반복 패턴","요일별 stress heatmap 제공\n\"일정 조정을 고려해보세요\"","다음 주 동일 시간대 HRV 비교","패턴 개선 시\n\"스트레스 패턴이 변하고 있어요\"","주간","JMIR 2025: 디지털 중재→스트레스 SMD -0.18"],
+["수면","Sleep Regularity Index (SRI) 저하","취침시간 nudge (30분 전)\n\"최적 취침시간이 다가오고 있어요\"","SRI 점수 추적\n(주간 평균)","\"이번 주 SRI 82점 (↑7점)\"\n수면 규칙성 그래프","아침","DHR Program: sleep 관리 포함\nBCT Umbrella: self-monitoring"],
+["수면","수면 시간 < 6h (3일 연속)","수면 부채 경고\n\"누적 부채 4.5시간\"","수면 시간 회복 추적\n주말까지 상환 가능 여부","\"수면 부채 완전 상환!\"\n+ 다음주 활동 권장 조정","아침","JMIR 2025: 수면 중재→우울 감소\nApple Health Study: 수면-건강 연결"],
+["수면","최적 수면 시간 학습 완료","개인별 최적 취침/기상 시각 알림","수면 효율 변화 추적","\"수면효율 88% (↑5%)\"","아침","Marabita 2022: personalized coaching\nMiller 2025: 깊은수면→PpgAge"],
+["수면","수면 부족 + 다음날 glucose 변동↑","\"오늘은 고강도 운동보다 가벼운 걷기를\"\n활동 강도 조정 권고","수면·glucose 교차 분석","cross-insight 제공\n\"수면 6h 미만 날 혈당 변동 25%↑\"","아침","Kooiman 2018: 활동-혈당 연계\nDHR Program: 다차원 피드백"],
+["혈당","CGM 식후 glucose > 개인 threshold","\"15분 걷기\" 또는\n\"다음 식사: 채소 먼저\"","식후 1h glucose 변화\nCGM spike 높이·면적","\"식후 걷기 후 spike 31% 감소\"\n개인별 food response 카탈로그","실시간","Frias 2017: SBP+HbA1c 동시 개선\nBCT Umbrella: feedback on outcomes"],
+["혈당","야간 저혈당 감지\n(CGM < 70mg/dL)","저녁 식사 조정 제안\n\"취침 전 소량 간식을 드세요\"","다음 날 야간 glucose 패턴","\"야간 저혈당 에피소드 0회\"\n수면 질 연계 안내","아침","Hietbrink 2025: 맞춤 문자 중재 수용성\nFrias 2017: glucose 관리"],
+["혈당","CGM 착용기간 TIR < 70%","식사 패턴 리뷰 + 활동량 증가 권고","주간 TIR 변화 추적","\"이번 주 TIR 78% (↑8%)\"\n가장 큰 spike 원인 식별","주간","BCT Umbrella: HbA1c SMD -0.44\nKooiman 2018: responder 분석"],
+["혈당","운동 전 glucose 확인\n(CGM 착용 시)","너무 낮으면 \"간식 드세요\"\n너무 높으면 \"식후 시간 확보\"","운동 중·후 glucose 반응","\"오늘 운동 타이밍이 최적이었어요\"\n운동-glucose 패턴 학습","실시간","Takahashi 2016: 활동→체중 감소\nHo 2024: 단계적 목표"],
+["노화","PpgAge 월간 변화","생활습관 종합 리뷰\n\"지난 달 어떤 변화가 영향을 줬을까요\"","PpgAge gap 증감 추적\n(월간/분기별)","\"생체나이 0.5세 감소!\"\n기여 요인 분석 제공","주간","Miller 2025: PpgAge MAE 2.4년\nincident ASCVD HR 1.46"],
+["노화","수면 중 SpO2 3%↓ 에피소드\n밤당 8회 이상","수면무호흡 screening\n\"전문의 상담을 권합니다\"","30일 ODI(desaturation index) 추적","위험 안내 + 건진 연계\nPSG 검사 추천","주간","Miller 2025: PpgAge+심혈관\nAHMS: 야간 생리 데이터"],
+["복합","높은 HR + 높은 HRV + 낮은 수면\n(3일 연속)","번아웃 경고\n\"의료진 telemonitoring flag\"","3개 지표 동시 회복 추적","\"컨디션 정상화 확인\"\n의료진 브리핑 해제","실시간","Sense2Stop: 실시간 스트레스 JITAI\nDHR Program: 코칭 결합"],
+["복합","건진 결과: HbA1c 변화","연간 delta report\n\"HbA1c 5.8→5.5% (-0.3%)\"","행동 변화량 ↔ 임상 변화 연결\n기여 요인 분석","\"걸음수↑ + 수면↑이 기여\"\n다음 6개월 목표 재설정","건진","Marabita 2022: 멀티오믹스+코칭\nBCT Umbrella: goal recalibration"],
+["복합","주간 multi-domain 종합","가장 약한 영역 집중 개입\nradar chart 기반 우선순위","5개 변수 radar chart\n주간 변화 추적","\"이번 주 수면 영역 크게 개선!\"\n종합 웰빙 점수","주간","DHR Program: 86% 1개+ 개선\nApple Health Study: 다영역 연결"],
+["복합","Omics profile + lifestyle 저점수","집중 coaching 대상 선정\n\"유전적으로 운동 효과가 큰 그룹\"","ITE(Individual Treatment Effect)\n추정","\"당신의 프로파일에서 운동이\n혈압에 가장 효과적\"","건진","Marabita 2022: MOFA 분석\nBCT Umbrella: credible source"],
+];
+const domMap={"활동":"b-act","수면":"b-sleep","스트레스":"b-stress","혈당":"b-glucose","노화":"b-aging","복합":"b-multi"};
+const tmMap={"실시간":"b-rt","아침":"b-am","주간":"b-wk","건진":"b-vi"};
+function render(){
+const df=document.getElementById("domF").value;
+const tf=document.getElementById("tmF").value;
+const s=document.getElementById("srch").value.toLowerCase();
+const tb=document.getElementById("tb");
+tb.innerHTML="";
+let n=0;
+D.forEach((r,i)=>{
+const [dom,trig,act,ev,rew,tm,src]=r;
+if(df&&!dom.includes(df))return;
+if(tf&&!tm.includes(tf))return;
+const txt=(dom+trig+act+ev+rew+src).toLowerCase();
+if(s&&!txt.includes(s))return;
+n++;
+const tr=document.createElement("tr");
+tr.innerHTML=`<td style="font-size:11px;color:var(--color-text-tertiary)">${i+1}</td>
+<td><span class="badge ${domMap[dom]||"b-multi"}">${dom}</span></td>
+<td style="white-space:pre-line">${trig}</td>
+<td style="white-space:pre-line">${act}</td>
+<td style="white-space:pre-line">${ev}</td>
+<td style="white-space:pre-line">${rew}</td>
+<td><span class="badge ${tmMap[tm]||"b-rt"}">${tm}</span></td>
+<td style="font-size:11px;white-space:pre-line;color:var(--color-text-secondary)">${src}</td>`;
+tb.appendChild(tr);
+});
+document.getElementById("cnt").textContent=n+"개 시나리오";
+}
+render();
+</script>
